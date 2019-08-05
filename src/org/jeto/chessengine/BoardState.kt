@@ -1,13 +1,16 @@
 package org.jeto.chessengine
 
 import org.jeto.chessengine.moves.Move
+import org.jeto.chessengine.pieces.Pawn
+import org.jeto.chessengine.pieces.Piece
 import kotlin.reflect.KClass
 
 class BoardState(
 	private val pieces: List<Piece?>,
-	val turnColor: Piece.Color,
-	val whiteCastleAvailable: Boolean,
-	var blackCastleAvailable: Boolean
+	val turnColor: Piece.Color = Piece.Color.WHITE,
+	val whiteCastlingAvailable: Boolean = true,
+	val blackCastlingAvailable: Boolean = true,
+	val enPassantTakeablePawn: Pawn? = null
 ) {
 	companion object {
 		const val SIZE: Int = 8
@@ -31,14 +34,13 @@ class BoardState(
 	operator fun plus(move: Move): BoardState = move.perform(this)
 	operator fun get(position: Position): Piece? = getPiece(position)
 	operator fun get(x: Int, y: Int): Piece? = getPiece(Position(x, y))
-	operator fun set(position: Position, piece: Piece): BoardState = setPiece(position, piece)
 	operator fun contains(piece: Piece): Boolean = piece in pieces
 
 	fun getPiece(position: Position): Piece? = pieces[getIndexFromPosition(position)]
 	fun setPiece(position: Position, piece: Piece?): BoardState {
 		val newPieces: MutableList<Piece?> = pieces.toMutableList()
 		newPieces[getIndexFromPosition(position)] = piece
-		return BoardState(newPieces, turnColor, whiteCastleAvailable, blackCastleAvailable)
+		return BoardState(newPieces, turnColor, whiteCastlingAvailable, blackCastlingAvailable)
 	}
 	fun getPiecePosition(piece: Piece): Position = piecesPositions[piece]!!
 	fun isPositionValid(x: Int, y: Int) = x in 1..SIZE && y in 1..SIZE
@@ -62,8 +64,12 @@ class BoardState(
 		newPieces[getIndexFromPosition(fromPosition)] = null
 		newPieces[getIndexFromPosition(toPosition)] = piece
 
-		return BoardState(newPieces, if (swapTurnColor) turnColor.getOpposite() else turnColor, whiteCastleAvailable, blackCastleAvailable)
+		return BoardState(newPieces, if (swapTurnColor) turnColor.getOpposite() else turnColor, whiteCastlingAvailable, blackCastlingAvailable)
 	}
+
+	fun disableWhiteCastling() = BoardState(pieces, turnColor, false, blackCastlingAvailable)
+	fun disableBlackCastling() = BoardState(pieces, turnColor, whiteCastlingAvailable, false)
+	fun disableCastling(color: Piece.Color) = if (color == Piece.Color.WHITE) disableWhiteCastling() else disableBlackCastling()
 
 	override fun toString(): String {
 		var output = ""

@@ -1,11 +1,11 @@
 package org.jeto.chessengine
 
 import org.jeto.chessengine.analysis.impl.*
-import org.jeto.chessengine.exceptions.InvalidMoveException
+import org.jeto.chessengine.exceptions.InvalidMoveCodeException
 import org.jeto.chessengine.parsing.impl.DefaultMoveCodeParser
 import java.util.*
 
-fun main(args: Array<String>) {
+fun main() {
 	val board = Board()
 //	board.performMove(Move(board.state.getPiece(Position.fromCode("D2"))!!, Position.fromCode("D4")))
 
@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
 	while (moveCode.isNotEmpty()) {
 		val threatAnalyzer = DefaultThreatAnalyzer()
 //		val checkStateAnalyzer = DefaultCheckStateAnalyzer(threatAnalyzer)
-		val legalMovesAnalyzer = DefaultLegalMovesAnalyzer(threatAnalyzer, DefaultLegalSpecialMovesAnalyzer(threatAnalyzer))
+		val legalMovesAnalyzer = DefaultLegalMovesAnalyzer(threatAnalyzer, DefaultSpecialMovesAnalyzer(threatAnalyzer))
 		val boardStateAnalyzer = DefaultBoardStateAnalyzer(legalMovesAnalyzer, threatAnalyzer)
 		val moveCodeParser = DefaultMoveCodeParser(legalMovesAnalyzer)
 
@@ -34,7 +34,7 @@ fun main(args: Array<String>) {
 			board.performMove(moveCodeParser.parseMoveCode(board.state, moveCode))
 			println(board.state)
 			println(boardStateAnalyzer.getCheckState(board.state))
-		} catch (e: InvalidMoveException) {
+		} catch (e: InvalidMoveCodeException) {
 			println(e)
 		}
 

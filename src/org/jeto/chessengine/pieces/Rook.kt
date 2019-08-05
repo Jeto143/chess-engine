@@ -1,7 +1,6 @@
 package org.jeto.chessengine.pieces
 
 import org.jeto.chessengine.BoardState
-import org.jeto.chessengine.Piece
 
 class Rook(color: Color) : Piece(color) {
 	override fun getMoveDirections(boardState: BoardState): List<MoveDirection> =

@@ -1,7 +1,6 @@
 package org.jeto.chessengine.pieces
 
 import org.jeto.chessengine.BoardState
-import org.jeto.chessengine.Piece
 
 class Queen(color: Color) : Piece(color) {
 	override fun getMoveDirections(boardState: BoardState): List<MoveDirection> =
@@ -17,5 +16,5 @@ class Queen(color: Color) : Piece(color) {
 		)
 
 	override fun toCode() = 'Q'
-	override fun toString() = if (color == Piece.Color.WHITE) "♕" else "♛"
+	override fun toString() = if (color == Color.WHITE) "♕" else "♛"
 }

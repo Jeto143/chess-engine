@@ -17,6 +17,12 @@ data class Position(val x: Int, val y: Int) {
 		get() = 'a' - 1 + x
 	val row: Int = y
 
+	override fun equals(other: Any?): Boolean = other is Position && other.x == x && other.y == y
+	override fun hashCode(): Int {
+		var result = x
+		result = 31 * result + y
+		return result
+	}
 	override fun toString() = "" + col + ('0' + y)
 }
 

@@ -2,22 +2,25 @@ package org.jeto.chessengine.parsing.impl
 
 import org.jeto.chessengine.BoardState
 import org.jeto.chessengine.moves.Move
-import org.jeto.chessengine.Piece
+import org.jeto.chessengine.pieces.Piece
 import org.jeto.chessengine.Position
 import org.jeto.chessengine.analysis.LegalMovesAnalyzer
-import org.jeto.chessengine.exceptions.InvalidMoveException
-import org.jeto.chessengine.moves.LongCastleMove
-import org.jeto.chessengine.moves.ShortCastleMove
+import org.jeto.chessengine.exceptions.InvalidMoveCodeException
+import org.jeto.chessengine.moves.LongCastlingMove
+import org.jeto.chessengine.moves.PromotionMove
+import org.jeto.chessengine.moves.ShortCastlingMove
 import org.jeto.chessengine.parsing.MoveCodeParser
 import org.jeto.chessengine.pieces.King
-import java.lang.Exception
+import org.jeto.chessengine.pieces.Pawn
 
 class DefaultMoveCodeParser(private val legalMovesAnalyzer: LegalMovesAnalyzer) : MoveCodeParser {
 	override fun parseMoveCode(boardState: BoardState, code: String): Move {
-		val codeRegex: Regex = "^(?:(O-O(?:-O)?)|([RNBQK]?)([a-h1-8]?)(x?)([a-h])([1-8]))([+#]?)$".toRegex(RegexOption.IGNORE_CASE)
-		require(code.matches(codeRegex))  // FIXME: specific move parse exception?
+		val codeRegex: Regex = "^(?:(O-O(?:-O)?)|([RNBQK]?)([a-h1-8]?)(x?)([a-h])([1-8]))(?:=([RNBQ]))?([+#]?)$".toRegex(RegexOption.IGNORE_CASE)
+		if (!code.matches(codeRegex)) {
+			throw InvalidMoveCodeException(code)
+		}
 
-		val (castleCode, pieceCode, piecePosition, takesFlag, col, row, modifier) = codeRegex.find(code)!!.destructured
+		val (castleCode, pieceCode, piecePosition, takesFlag, col, row, promotionType, modifier) = codeRegex.find(code)!!.destructured
 
 		if (castleCode.isNotEmpty()) {
 			val king: King = boardState.getPieces(
@@ -25,9 +28,23 @@ class DefaultMoveCodeParser(private val legalMovesAnalyzer: LegalMovesAnalyzer) 
 				type = King::class
 			).first() as King
 
-			val castleMove = if (castleCode == "O-O-O") LongCastleMove(king) else ShortCastleMove(king)
-			if (legalMovesAnalyzer.isMoveLegal(boardState, castleMove)) {
+			val castleMove = if (castleCode == "O-O-O") LongCastlingMove(king) else ShortCastlingMove(king)
+			if (castleMove in legalMovesAnalyzer.getLegalMoves(boardState, king)) {
 				return castleMove
+			}
+		}
+		else if (promotionType.isNotEmpty()) {
+			val targetPosition: Position = Position.fromCode(col + row)
+
+			val pawns = boardState.getPieces(
+				color = boardState.turnColor,
+				type = Pawn::class
+			)
+			for (pawn in pawns) {
+				val promotionMove = PromotionMove(pawn as Pawn, boardState.getPiecePosition(pawn), targetPosition, Piece.getTypeFromCode(promotionType[0]))
+				if (promotionMove in legalMovesAnalyzer.getLegalMoves(boardState, pawn)) {
+					return promotionMove
+				}
 			}
 		}
 		else {
@@ -51,7 +68,7 @@ class DefaultMoveCodeParser(private val legalMovesAnalyzer: LegalMovesAnalyzer) 
 			}
 
 			if (pieces.isEmpty()) {
-				throw InvalidMoveException(code)
+				throw InvalidMoveCodeException(code)
 			}
 
 			// TODO: handle piecePosition
@@ -60,6 +77,6 @@ class DefaultMoveCodeParser(private val legalMovesAnalyzer: LegalMovesAnalyzer) 
 			return Move(piece, boardState.getPiecePosition(piece), targetPosition)
 		}
 
-		throw Exception("fail")
+		throw InvalidMoveCodeException(code)
 	}
 }

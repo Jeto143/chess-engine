@@ -1,6 +1,7 @@
-package org.jeto.chessengine
+package org.jeto.chessengine.pieces
 
-import org.jeto.chessengine.pieces.*
+import org.jeto.chessengine.BoardState
+import org.jeto.chessengine.Position
 import kotlin.reflect.KClass
 
 abstract class Piece(val color: Color) {
@@ -36,7 +37,7 @@ abstract class Piece(val color: Color) {
 	fun computeTargetMovePositions(
 		boardState: BoardState,
 		moveDirection: MoveDirection,
-		includeObstacles: Boolean = false,
+		includeFinalObstacle: Boolean = false,
 		filter: (position: Position) -> Boolean = { true }
 	): List<Position> {
 		val positions: MutableList<Position> = mutableListOf()
@@ -49,13 +50,16 @@ abstract class Piece(val color: Color) {
 				break
 			}
 			val position = Position(newX, newY)
-			if (!includeObstacles && boardState.isPositionOccupied(position)) {
+			val positionOccupied = boardState.isPositionOccupied(position)
+			if (!positionOccupied || includeFinalObstacle) {
+				if (filter(position)) {
+					positions += position
+				}
+			}
+			if (positionOccupied) {
 				break
 			}
 			currentPosition = position
-			if (filter(position)) {
-				positions += currentPosition
-			}
 		}
 
 		return positions
