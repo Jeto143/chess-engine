@@ -4,7 +4,6 @@ import org.jeto.chessengine.BoardState
 import org.jeto.chessengine.Position
 import org.jeto.chessengine.pieces.*
 import kotlin.reflect.KClass
-import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.primaryConstructor
 
 class PromotionMove(pawn: Pawn, fromPosition: Position, toPosition: Position, val promotionType: KClass<out Piece>, modifier: Modifier = Modifier.NONE) : Move(
@@ -25,6 +24,10 @@ class PromotionMove(pawn: Pawn, fromPosition: Position, toPosition: Position, va
 		return super.perform(boardState)
 			.setPiece(toPosition, promotionType.primaryConstructor?.call(piece.color))
 	}
+
+	override fun equals(other: Any?): Boolean = super.equals(other) && promotionType === (other as PromotionMove).promotionType
+	override fun hashCode(): Int = 31 * super.hashCode() + promotionType.hashCode()
+	override fun toString(): String = super.toString() + "=${Piece.getCodeFromType(promotionType)}"
 }
 
 

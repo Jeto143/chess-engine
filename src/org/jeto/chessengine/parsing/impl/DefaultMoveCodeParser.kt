@@ -15,7 +15,7 @@ import org.jeto.chessengine.pieces.Pawn
 
 class DefaultMoveCodeParser(private val legalMovesAnalyzer: LegalMovesAnalyzer) : MoveCodeParser {
 	override fun parseMoveCode(boardState: BoardState, code: String): Move {
-		val codeRegex: Regex = "^(?:(O-O(?:-O)?)|([RNBQK]?)([a-h1-8]?)(x?)([a-h])([1-8]))(?:=([RNBQ]))?([+#]?)$".toRegex(RegexOption.IGNORE_CASE)
+		val codeRegex: Regex = "^(?:(O-O(?:-O)?)|([RNBQK]?)([a-h1-8]?)(x?)([a-h])([1-8]))(?:=([RNBQ]))?([+#]?)$".toRegex()
 		if (!code.matches(codeRegex)) {
 			throw InvalidMoveCodeException(code)
 		}
@@ -51,32 +51,34 @@ class DefaultMoveCodeParser(private val legalMovesAnalyzer: LegalMovesAnalyzer) 
 			val targetPosition: Position = Position.fromCode(col + row)
 			val takes: Boolean = takesFlag == "x"
 
-			var pieces = boardState.getPieces(
+			val pieces = boardState.getPieces(
 				color = boardState.turnColor,
 				type = Piece.getTypeFromCode(if (pieceCode.isNotEmpty()) pieceCode[0] else null)
 			)
 
-			// TODO: hard to reread, put into a function and name it well
-			// FIXME: not sure that "is" check is good at all
-			pieces = pieces.filter { piece ->
-				for (move: Move in legalMovesAnalyzer.getLegalMoves(boardState, piece)) {
-					if (move.toPosition == targetPosition && takes == boardState.isPositionOccupied(targetPosition)) {
-						return@filter true
-					}
-				}
-				return@filter false
-			}
+			val move = findCorrespondingMove(boardState, pieces, targetPosition, takes)
 
-			if (pieces.isEmpty()) {
+			if (move === null) {
 				throw InvalidMoveCodeException(code)
 			}
 
 			// TODO: handle piecePosition
 
-			val piece = pieces.first()
-			return Move(piece, boardState.getPiecePosition(piece), targetPosition)
+			return move
 		}
 
 		throw InvalidMoveCodeException(code)
+	}
+
+	private fun findCorrespondingMove(boardState: BoardState, pieces: List<Piece>, targetPosition: Position, takes: Boolean): Move? {
+		for (piece in pieces) {
+			for (move: Move in legalMovesAnalyzer.getLegalMoves(boardState, piece)) {
+				if (move.toPosition == targetPosition && takes == move.modifier.contains(Move.Modifier.TAKES)) {
+					return move
+				}
+			}
+		}
+
+		return null
 	}
 }

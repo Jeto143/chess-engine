@@ -25,7 +25,3 @@ data class Position(val x: Int, val y: Int) {
 	}
 	override fun toString() = "" + col + ('0' + y)
 }
-
-//fun Position(code: String): Position {
-//
-//}

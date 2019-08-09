@@ -13,7 +13,7 @@ class Board(var state: BoardState = DEFAULT_STATE) {
 					Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(
 					Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE),
 				null, null, null, null, null, Rook(Piece.Color.WHITE), null, null,
-				null, null, null, null, null, Queen(Piece.Color.WHITE), null, null,
+				null, null, Pawn(Piece.Color.BLACK), null, null, Queen(Piece.Color.WHITE), null, null,
 				null, null, null, null, null, null, null, null,
 				null, null, null, null, null, null, null, null,
 				Pawn(Piece.Color.WHITE), Pawn(Piece.Color.BLACK), Pawn(

@@ -26,7 +26,6 @@ open class Move(val piece: Piece, val fromPosition: Position, val toPosition: Po
 	operator fun plus(addedModifier: Modifier?): Move = Move(piece, fromPosition, toPosition, modifier + addedModifier)
 	override operator fun equals(other: Any?): Boolean =
 		other is Move && piece == other.piece && fromPosition == other.fromPosition && toPosition == other.toPosition
-
 	override fun hashCode(): Int {
 		var result = piece.hashCode()
 		result = 31 * result + fromPosition.hashCode()

@@ -13,17 +13,18 @@ abstract class Piece(val color: Color) {
 	}
 
 	companion object {
-		fun getTypeFromCode(code: Char?): KClass<out Piece> {
-			return when (code) {
-				'R' -> Rook::class
-				'N' -> Knight::class
-				'B' -> Bishop::class
-				'K' -> King::class
-				'Q' -> Queen::class
-				null -> Pawn::class
-				else -> throw IllegalArgumentException("No such piece code: %s.".format(code))
-			}
-		}
+		private val codeToType = mapOf(
+			'R' to Rook::class,
+			'N' to Knight::class,
+			'B' to Bishop::class,
+			'K' to King::class,
+			'Q' to Queen::class,
+			null to Pawn::class
+		)
+		private val typeToCode = codeToType.map { (code, type) -> type to code }.toMap()
+
+		fun getTypeFromCode(code: Char?): KClass<out Piece> = codeToType[code] ?: error("No such piece code: %s".format(code))
+		fun getCodeFromType(type: KClass<out Piece>): Char = typeToCode[type] ?: error("No such piece type: %s".format(type))
 	}
 
 	abstract fun toCode(): Char?
@@ -31,12 +32,12 @@ abstract class Piece(val color: Color) {
 	fun isWhite() = color == Color.WHITE
 	fun isBlack() = color == Color.BLACK
 
-	abstract fun getMoveDirections(boardState: BoardState): List<MoveDirection>
-	open fun getTakeDirections(boardState: BoardState): List<MoveDirection> = getMoveDirections(boardState)
+	abstract fun getMoveDirections(boardState: BoardState): List<Piece.MoveDirection>
+	open fun getTakeDirections(boardState: BoardState): List<Piece.MoveDirection> = getMoveDirections(boardState)
 
 	fun computeTargetMovePositions(
 		boardState: BoardState,
-		moveDirection: MoveDirection,
+		moveDirection: Piece.MoveDirection,
 		includeFinalObstacle: Boolean = false,
 		filter: (position: Position) -> Boolean = { true }
 	): List<Position> {

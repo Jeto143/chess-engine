@@ -19,4 +19,6 @@ class ShortCastlingMove(king: King, modifier: Modifier = Modifier.NONE) : Move(
 			.movePiece(boardState[rookFromPosition]!!, rookFromPosition, rookToPosition, swapTurnColor = false)
 			.disableCastling(piece.color)
 	}
+
+	override fun toString(): String = "O-O"
 }

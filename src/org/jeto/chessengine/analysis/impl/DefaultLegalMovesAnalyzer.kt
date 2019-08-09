@@ -10,6 +10,10 @@ import org.jeto.chessengine.moves.Move
 class DefaultLegalMovesAnalyzer(private val threatAnalyzer: ThreatAnalyzer, private val legalSpecialMovesAnalyzer: DefaultSpecialMovesAnalyzer) : LegalMovesAnalyzer {
 	private val legalMovesCache: MutableMap<BoardState, MutableMap<Piece, List<Move>>> = mutableMapOf()
 
+	override fun getLegalMoves(boardState: BoardState): List<Move> {
+		return boardState.getPieces(color = boardState.turnColor).map { piece -> getLegalMoves(boardState, piece) }.flatten()
+	}
+
 	override fun getLegalMoves(boardState: BoardState, piece: Piece): List<Move> {
 		if (boardState !in legalMovesCache) {
 			legalMovesCache[boardState] = mutableMapOf()
@@ -39,7 +43,7 @@ class DefaultLegalMovesAnalyzer(private val threatAnalyzer: ThreatAnalyzer, priv
 	}.toList()
 
 	private fun computePotentialBasicTakingMoves(boardState: BoardState, piece: Piece): List<Move> = sequence {
-		for (moveDirection in piece.getMoveDirections(boardState)) {
+		for (moveDirection in piece.getTakeDirections(boardState)) {
 			for (targetPosition in piece.computeTargetMovePositions(boardState, moveDirection, includeFinalObstacle = true) { squareIsFreeOrHostile(boardState, it, piece) }) {
 				yield(Move(piece, boardState.getPiecePosition(piece), targetPosition, Move.Modifier.TAKES))
 			}
