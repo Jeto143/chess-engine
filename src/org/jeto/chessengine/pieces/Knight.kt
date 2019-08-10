@@ -16,5 +16,4 @@ class Knight(color: Color) : Piece(color) {
 		)
 
 	override fun toCode() = 'N'
-	override fun toString() = if (color == Color.WHITE) "♘" else "♞"
 }

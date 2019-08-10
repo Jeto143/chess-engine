@@ -16,5 +16,4 @@ class King(color: Color) : Piece(color) {
 		)
 
 	override fun toCode() = 'K'
-	override fun toString() = if (color == Color.WHITE) "♔" else "♚"
 }

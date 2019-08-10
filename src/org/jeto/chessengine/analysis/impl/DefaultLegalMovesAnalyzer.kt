@@ -27,12 +27,25 @@ class DefaultLegalMovesAnalyzer(private val threatAnalyzer: ThreatAnalyzer, priv
 
 	override fun isInCheckmate(boardState: BoardState, sideColor: Piece.Color): Boolean = boardState.getPieces(color = sideColor).all { getLegalMoves(boardState, it).isEmpty() }
 
-	private fun computeLegalMoves(boardState: BoardState, piece: Piece): List<Move> =
-		(computePotentialBasicNonTakingMoves(boardState, piece)
+	private fun computeLegalMoves(boardState: BoardState, piece: Piece): List<Move> {
+		var legalMoves = (
+				computePotentialBasicNonTakingMoves(boardState, piece)
 				+ computePotentialBasicTakingMoves(boardState, piece)
 				+ legalSpecialMovesAnalyzer.computePotentialSpecialMoves(boardState, piece))
 			.filter { move -> !threatAnalyzer.isInCheck(boardState + move, move.piece.color) }
+
+		legalMoves = legalMoves
+			.map { move ->
+				val otherMove = legalMoves.find { it !== move && it.piece::class == move.piece::class && it.toPosition == move.toPosition }
+				return@map if (otherMove === null) move else when {
+					otherMove.fromPosition.col != move.fromPosition.col -> move + Move.Modifier.EXPLICIT_COL
+					else -> move + Move.Modifier.EXPLICIT_ROW
+				}
+			}
 //			.map { move -> fillMoveCheckModifiers(boardState, move) }
+
+		return legalMoves
+	}
 
 	private fun computePotentialBasicNonTakingMoves(boardState: BoardState, piece: Piece): List<Move> = sequence {
 		for (moveDirection in piece.getMoveDirections(boardState)) {
@@ -52,6 +65,7 @@ class DefaultLegalMovesAnalyzer(private val threatAnalyzer: ThreatAnalyzer, priv
 
 	private fun fillMoveCheckModifiers(boardState: BoardState, move: Move): Move {
 		val newBoardState = boardState + move
+
 		return when {
 			isInCheckmate(newBoardState) -> move + Move.Modifier.CHECKMATE
 			threatAnalyzer.isInCheck(newBoardState) -> move + Move.Modifier.CHECK

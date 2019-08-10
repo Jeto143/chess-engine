@@ -12,5 +12,4 @@ class Rook(color: Color) : Piece(color) {
 		)
 
 	override fun toCode() = 'R'
-	override fun toString() = if (color == Color.WHITE) "♖" else "♜"
 }

@@ -3,6 +3,7 @@ package org.jeto.chessengine.pieces
 import org.jeto.chessengine.BoardState
 import org.jeto.chessengine.Position
 import kotlin.reflect.KClass
+import kotlin.reflect.full.primaryConstructor
 
 abstract class Piece(val color: Color) {
 	data class MoveDirection(val xDelta: Int, val yDelta: Int, val factor: Int)
@@ -13,6 +14,22 @@ abstract class Piece(val color: Color) {
 	}
 
 	companion object {
+		private val symbolToTypeAndColor = mapOf(
+			'♔' to Pair(King::class, Color.WHITE),
+			'♚' to Pair(King::class, Color.BLACK),
+			'♕' to Pair(Queen::class, Color.WHITE),
+			'♛' to Pair(Queen::class, Color.BLACK),
+			'♖' to Pair(Rook::class, Color.WHITE),
+			'♜' to Pair(Rook::class, Color.BLACK),
+			'♗' to Pair(Bishop::class, Color.WHITE),
+			'♝' to Pair(Bishop::class, Color.BLACK),
+			'♘' to Pair(Knight::class, Color.WHITE),
+			'♞' to Pair(Knight::class, Color.BLACK),
+			'♙' to Pair(Pawn::class, Color.WHITE),
+			'♟' to Pair(Pawn::class, Color.BLACK)
+		)
+		private val typeAndColorToSymbol = symbolToTypeAndColor.map { (symbol, typeAndColor) -> typeAndColor to symbol }.toMap()
+
 		private val codeToType = mapOf(
 			'R' to Rook::class,
 			'N' to Knight::class,
@@ -23,7 +40,9 @@ abstract class Piece(val color: Color) {
 		)
 		private val typeToCode = codeToType.map { (code, type) -> type to code }.toMap()
 
+		fun fromSymbol(symbol: Char): Piece = symbolToTypeAndColor.getValue(symbol).let { (pieceClass, color) -> pieceClass.primaryConstructor!!.call(color) }
 		fun getTypeFromCode(code: Char?): KClass<out Piece> = codeToType[code] ?: error("No such piece code: %s".format(code))
+
 		fun getCodeFromType(type: KClass<out Piece>): Char = typeToCode[type] ?: error("No such piece type: %s".format(type))
 	}
 
@@ -34,6 +53,8 @@ abstract class Piece(val color: Color) {
 
 	abstract fun getMoveDirections(boardState: BoardState): List<Piece.MoveDirection>
 	open fun getTakeDirections(boardState: BoardState): List<Piece.MoveDirection> = getMoveDirections(boardState)
+
+	override fun toString(): String = typeAndColorToSymbol.getValue(Pair(javaClass.kotlin, color)).toString()
 
 	fun computeTargetMovePositions(
 		boardState: BoardState,

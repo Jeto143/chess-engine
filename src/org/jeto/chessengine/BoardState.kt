@@ -14,6 +14,25 @@ class BoardState(
 ) {
 	companion object {
 		const val SIZE: Int = 8
+
+		fun fromString(
+			boardDescription: String, turnColor: Piece.Color = Piece.Color.WHITE,
+			whiteCastlingAvailable: Boolean = true,
+			blackCastlingAvailable: Boolean = true,
+			enPassantTakeablePawn: Pawn? = null
+		): BoardState? {
+
+			val pieces = boardDescription
+				.split('|')
+				.filter { !it.matches(Regex(".*[A-Z0-9].*", RegexOption.DOT_MATCHES_ALL)) }
+				.map { it.replace(Regex("\\s+"), "") }
+				.map { if (it.isEmpty()) null else Piece.fromSymbol(it[0]) }
+				.chunked(8)
+				.reversed()
+				.flatten()
+
+			return BoardState(pieces, turnColor, whiteCastlingAvailable, blackCastlingAvailable, enPassantTakeablePawn)
+		}
 	}
 
 	private val piecesPositions: MutableMap<Piece, Position> = mutableMapOf()

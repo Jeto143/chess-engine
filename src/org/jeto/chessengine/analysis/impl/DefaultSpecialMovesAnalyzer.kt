@@ -36,26 +36,55 @@ class DefaultSpecialMovesAnalyzer(private val threatAnalyzer: ThreatAnalyzer) : 
 	}
 
 	private fun isShortCastlingLegal(boardState: BoardState, king: King): Boolean {
-		return isCastlingLegal(
-			boardState, king, if (king.isWhite())
+		return when (king.color) {
+			Piece.Color.WHITE -> isCastlingLegal(
+				boardState,
+				king,
+				Position.fromCode("e1"),
+				Position.fromCode("h1"),
 				arrayOf(Position.fromCode("f1"), Position.fromCode("g1"))
-			else arrayOf(Position.fromCode("f8"), Position.fromCode("g8"))
-		)
+			)
+			Piece.Color.BLACK -> isCastlingLegal(
+				boardState,
+				king,
+				Position.fromCode("e8"),
+				Position.fromCode("h8"),
+				arrayOf(Position.fromCode("f8"), Position.fromCode("g8"))
+			)
+		}
 	}
 
 	private fun isLongCastlingLegal(boardState: BoardState, king: King): Boolean {
-		return isCastlingLegal(
-			boardState, king, if (king.isWhite())
+		return when (king.color) {
+			Piece.Color.WHITE -> isCastlingLegal(
+				boardState,
+				king,
+				Position.fromCode("e1"),
+				Position.fromCode("a1"),
 				arrayOf(Position.fromCode("b1"), Position.fromCode("c1"), Position.fromCode("d1"))
-			else arrayOf(Position.fromCode("b8"), Position.fromCode("c8"), Position.fromCode("d8"))
-		)
+			)
+			Piece.Color.BLACK -> isCastlingLegal(
+				boardState,
+				king,
+				Position.fromCode("e8"),
+				Position.fromCode("a8"),
+				arrayOf(Position.fromCode("b8"), Position.fromCode("c8"), Position.fromCode("d8"))
+			)
+		}
 	}
 
-	private fun isCastlingLegal(boardState: BoardState, king: King, positionsInBetween: Array<Position>): Boolean {
-		val castlingAvailable = if (king.isWhite()) boardState.whiteCastlingAvailable else boardState.blackCastlingAvailable
-		return castlingAvailable && positionsInBetween.all { position ->
-			!boardState.isPositionOccupied(position) && !threatAnalyzer.isUnderAttack(boardState, position, king.color.getOpposite())
-		}
+	private fun isCastlingLegal(boardState: BoardState, king: King, kingRequiredPosition: Position, rookRequiredPosition: Position, positionsInBetween: Array<Position>): Boolean {
+		return (if (king.isWhite()) boardState.whiteCastlingAvailable else boardState.blackCastlingAvailable)
+				&& boardState[kingRequiredPosition] == king
+				&& boardState[rookRequiredPosition] is Rook
+				&& boardState[rookRequiredPosition]!!.color === king.color
+				&& positionsInBetween.all { position ->
+					!boardState.isPositionOccupied(position) && !threatAnalyzer.isUnderAttack(
+						boardState,
+						position,
+						king.color.getOpposite()
+					)
+				}
 	}
 
 	private fun isEnPassantLegal(boardState: BoardState, pawn: Pawn): Boolean {

@@ -18,6 +18,5 @@ class Pawn(color: Color) : Piece(color) {
 			)
 		}
 
-	override fun toCode(): Nothing? = null
-	override fun toString() = if (isWhite()) "♙" else "♟"
+	override fun toCode(): Char? = null
 }

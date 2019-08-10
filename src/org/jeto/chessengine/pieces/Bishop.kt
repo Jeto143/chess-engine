@@ -12,5 +12,4 @@ class Bishop(color: Color) : Piece(color) {
 		)
 
 	override fun toCode() = 'B'
-	override fun toString() = if (color == Color.WHITE) "♗" else "♝"
 }

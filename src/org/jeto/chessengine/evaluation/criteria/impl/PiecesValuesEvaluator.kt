@@ -27,5 +27,5 @@ class PiecesValuesEvaluator : BoardStateCriterionEvaluator {
 		return rangeLerp(absoluteScore.toDouble(), -MAX_SCORE, MAX_SCORE, -10.0, 10.0).toFloat()
 	}
 
-	private fun getPieceScore(piece: Piece): Int = values[piece.javaClass.kotlin] ?: error("")
+	private fun getPieceScore(piece: Piece): Int = values.getValue(piece.javaClass.kotlin)
 }

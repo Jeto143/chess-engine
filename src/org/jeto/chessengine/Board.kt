@@ -7,22 +7,14 @@ class Board(var state: BoardState = DEFAULT_STATE) {
 	companion object {
 		val DEFAULT_STATE: BoardState = BoardState(
 			listOf(
-				Rook(Piece.Color.WHITE), null, null, null, King(Piece.Color.WHITE), null, null, Rook(
-					Piece.Color.WHITE),
-				Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(
-					Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(
-					Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE),
-				null, null, null, null, null, Rook(Piece.Color.WHITE), null, null,
-				null, null, Pawn(Piece.Color.BLACK), null, null, Queen(Piece.Color.WHITE), null, null,
+				Rook(Piece.Color.WHITE), Knight(Piece.Color.WHITE), Bishop(Piece.Color.WHITE), Queen(Piece.Color.WHITE), King(Piece.Color.WHITE), Bishop(Piece.Color.WHITE), Knight(Piece.Color.WHITE), Rook(Piece.Color.WHITE),
+				Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE), Pawn(Piece.Color.WHITE),
 				null, null, null, null, null, null, null, null,
 				null, null, null, null, null, null, null, null,
-				Pawn(Piece.Color.WHITE), Pawn(Piece.Color.BLACK), Pawn(
-					Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(
-					Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK),
-				null, Knight(Piece.Color.BLACK), Bishop(
-					Piece.Color.BLACK), Queen(Piece.Color.BLACK), King(Piece.Color.BLACK), Bishop(
-					Piece.Color.BLACK), Knight(Piece.Color.BLACK), Rook(
-					Piece.Color.BLACK)
+				null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null, null, null,
+				Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK), Pawn(Piece.Color.BLACK),
+				Rook(Piece.Color.BLACK), Knight(Piece.Color.BLACK), Bishop(Piece.Color.BLACK), Queen(Piece.Color.BLACK), King(Piece.Color.BLACK), Bishop(Piece.Color.BLACK), Knight(Piece.Color.BLACK), Rook(Piece.Color.BLACK)
 			)
 		)
 	}

@@ -6,11 +6,7 @@ import org.jeto.chessengine.evaluation.criteria.BoardStateCriterionEvaluator
 import org.jeto.chessengine.evaluation.BoardStateEvaluator
 import org.jeto.chessengine.moves.Move
 import org.jeto.chessengine.pieces.Piece
-
-fun <T> printAndReturnLast(vararg something: T): T {
-	something.forEach { println(it) }
-	return something.last()
-}
+import java.math.RoundingMode
 
 class BasicBoardStateEvaluator(
 	private val criteriaEvaluators: Map<BoardStateCriterionEvaluator, Float>,
@@ -30,7 +26,9 @@ class BasicBoardStateEvaluator(
 		}
 		return criteriaEvaluators
 			.map { (criterionEvaluator, weight) -> criterionEvaluator.evaluate(boardState) * weight }
-			.sum()
+			.average()
+			.toBigDecimal().setScale(1, RoundingMode.HALF_EVEN)
+			.toFloat()
 	}
 
 	override fun findBestMove(boardState: BoardState, depth: Int): Pair<Move, Float>? {
@@ -40,15 +38,15 @@ class BasicBoardStateEvaluator(
 			.map { move -> move to evaluate(boardState + move, depth) }
 			.toMap()
 
-		println(nextMoveEvaluations)
+//	println(nextMoveEvaluations)
 
 		if (nextMoveEvaluations.isEmpty()) {
 			return null
 		}
 
 		return when (boardState.turnColor) {
-			Piece.Color.WHITE -> nextMoveEvaluations.maxBy { (_, evaluation) -> evaluation }!!.toPair()
-			Piece.Color.BLACK -> nextMoveEvaluations.minBy { (_, evaluation) -> evaluation }!!.toPair()
+			Piece.Color.WHITE -> nextMoveEvaluations.maxBy { it.value }!!.toPair()
+			Piece.Color.BLACK -> nextMoveEvaluations.minBy { it.value }!!.toPair()
 		}
 	}
 }

@@ -1,10 +1,12 @@
 package org.jeto.chessengine
 
 import org.jeto.chessengine.analysis.impl.*
+import org.jeto.chessengine.evaluation.criteria.impl.PiecesPositionsEvaluator
 import org.jeto.chessengine.evaluation.criteria.impl.PiecesValuesEvaluator
 import org.jeto.chessengine.evaluation.impl.BasicBoardStateEvaluator
 import org.jeto.chessengine.exceptions.InvalidMoveCodeException
 import org.jeto.chessengine.parsing.impl.DefaultMoveCodeParser
+import org.jeto.chessengine.pieces.Piece
 import java.util.*
 
 fun main() {
@@ -25,11 +27,24 @@ fun main() {
 	val legalMovesAnalyzer = DefaultLegalMovesAnalyzer(threatAnalyzer, DefaultSpecialMovesAnalyzer(threatAnalyzer))
 	val boardStateAnalyzer = DefaultBoardStateAnalyzer(legalMovesAnalyzer, threatAnalyzer)
 	val moveCodeParser = DefaultMoveCodeParser(legalMovesAnalyzer)
-	val piecesValuesEvaluator = PiecesValuesEvaluator()
-	val boardStateEvaluator = BasicBoardStateEvaluator(mapOf(piecesValuesEvaluator to 1.0f), legalMovesAnalyzer)
+
+	val boardStateEvaluator = BasicBoardStateEvaluator(mapOf(
+		PiecesValuesEvaluator() to 1.0f,
+		PiecesPositionsEvaluator() to 1.0f
+	), legalMovesAnalyzer)
+
+	board.state = BoardState.fromString("8\t|\t\t|\t\t|\t\t|\t♜\t|\t♚\t|\t♝\t|\t\t|\t♜\t |\n" +
+			"7\t|\t♛\t|\t♟\t|\t\t|\t♞\t|\t♟\t|\t♟\t|\t♟\t|\t♟\t |\n" +
+			"6\t|\t\t|\t\t|\t♟\t|\t♟\t|\t\t|\t\t|\t\t|\t\t |\n" +
+			"5\t|\t♟\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t |\n" +
+			"4\t|\t\t|\t\t|\t\t|\t♙\t|\t♙\t|\t\t|\t♝\t|\t\t |\n" +
+			"3\t|\t♙\t|\t\t|\t♘\t|\t♗\t|\t♗\t|\t♘\t|\t\t|\t\t |\n" +
+			"2\t|\t\t|\t♙\t|\t♕\t|\t\t|\t\t|\t♙\t|\t♙\t|\t♙\t |\n" +
+			"1\t|\t\t|\t\t|\t\t|\t♖\t|\t\t|\t♖\t|\t♔\t|\t\t |\n" +
+			"\t\tA\t\tB\t\tC\t\tD\t\tE\t\tF\t\tG\t\tH\t", Piece.Color.WHITE, true)!!
 
 	println(board.state)
-	println(boardStateEvaluator.findBestMove(board.state, 1))
+	println(boardStateEvaluator.findBestMove(board.state, 2))
 
 	val reader = Scanner(System.`in`)
 	var moveCode: String = reader.next()
