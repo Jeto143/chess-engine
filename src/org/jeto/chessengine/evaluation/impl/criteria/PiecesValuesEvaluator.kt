@@ -1,11 +1,11 @@
-package org.jeto.chessengine.evaluation.criteria.impl
+package org.jeto.chessengine.evaluation.impl.criteria
 
 import org.jeto.chessengine.BoardState
-import org.jeto.chessengine.evaluation.criteria.BoardStateCriterionEvaluator
+import org.jeto.chessengine.evaluation.BoardStateEvaluator
 import org.jeto.chessengine.extension.rangeLerp
 import org.jeto.chessengine.pieces.*
 
-class PiecesValuesEvaluator : BoardStateCriterionEvaluator {
+class PiecesValuesEvaluator : BoardStateEvaluator {
 	companion object {
 		val values = mapOf(
 			Pawn::class to 100,

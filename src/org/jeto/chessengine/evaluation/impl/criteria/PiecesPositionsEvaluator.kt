@@ -1,11 +1,11 @@
-package org.jeto.chessengine.evaluation.criteria.impl
+package org.jeto.chessengine.evaluation.impl.criteria
 
 import org.jeto.chessengine.BoardState
-import org.jeto.chessengine.evaluation.criteria.BoardStateCriterionEvaluator
+import org.jeto.chessengine.evaluation.BoardStateEvaluator
 import org.jeto.chessengine.extension.rangeLerp
 import org.jeto.chessengine.pieces.*
 
-class PiecesPositionsEvaluator : BoardStateCriterionEvaluator {
+class PiecesPositionsEvaluator : BoardStateEvaluator {
 	companion object {
 		val valueMap = mapOf(
 			Pawn::class to arrayOf(
@@ -83,9 +83,7 @@ class PiecesPositionsEvaluator : BoardStateCriterionEvaluator {
 
 	private fun getPieceScore(boardState: BoardState, piece: Piece): Int {
 		val (x, y) = boardState.getPiecePosition(piece)
-
-		val indexInValueMap = if (piece.isWhite()) (8 - y) * 8 + x - 1 else y * 7 + x - 1
-
+		val indexInValueMap = if (piece.isWhite()) (8 - y) * 8 + x - 1 else (y - 1) * 8 + x - 1
 		return valueMap.getValue(piece.javaClass.kotlin)[indexInValueMap]
 	}
 }

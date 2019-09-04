@@ -4,17 +4,9 @@ import org.jeto.chessengine.BoardState
 import org.jeto.chessengine.Position
 import org.jeto.chessengine.pieces.Pawn
 
-class EnPassantMove(pawn: Pawn, fromPosition: Position, toPosition: Position, modifier: Modifier = Modifier.NONE) : Move(
-	pawn,
-	fromPosition,
-	toPosition,
-	modifier
-) {
-	override fun perform(boardState: BoardState): BoardState {
-		val enPassantTakeablePawn = boardState.enPassantTakeablePawn!!
-
-		return super.perform(boardState)
-			.setPiece(boardState.getPiecePosition(enPassantTakeablePawn), null)
+class EnPassantMove(pawn: Pawn, fromPosition: Position, toPosition: Position) : BasicMove(pawn, fromPosition, toPosition) {
+	override fun perform(boardState: BoardState): BoardState =
+		super.perform(boardState)
+			.setPiece(boardState.getPiecePosition(boardState.enPassantTakeablePawn!!), null)
 			.setEnPassantTakeablePawn(null)
-	}
 }

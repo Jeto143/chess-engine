@@ -6,12 +6,7 @@ import org.jeto.chessengine.pieces.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
-class PromotionMove(pawn: Pawn, fromPosition: Position, toPosition: Position, val promotionType: KClass<out Piece>, modifier: Modifier = Modifier.NONE) : Move(
-	pawn,
-	fromPosition,
-	toPosition,
-	modifier
-) {
+class PromotionMove(pawn: Pawn, fromPosition: Position, toPosition: Position, private val promotionType: KClass<out Piece>) : BasicMove(pawn, fromPosition, toPosition) {
 	companion object {
 		val ALLOWED_PROMOTION_TYPES = arrayOf(Queen::class, Rook::class, Knight::class, Bishop::class)
 	}
@@ -27,7 +22,8 @@ class PromotionMove(pawn: Pawn, fromPosition: Position, toPosition: Position, va
 
 	override fun equals(other: Any?): Boolean = super.equals(other) && promotionType === (other as PromotionMove).promotionType
 	override fun hashCode(): Int = 31 * super.hashCode() + promotionType.hashCode()
-	override fun toString(): String = super.toString() + "=${Piece.getCodeFromType(promotionType)}"
+	override fun getCode(taking: Boolean, explicitPositionType: ExplicitPositionType?): String =
+		super.getCode(taking, explicitPositionType) + "=${Piece.getCodeFromType(promotionType)}"
 }
 
 

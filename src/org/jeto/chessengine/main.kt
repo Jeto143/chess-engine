@@ -1,68 +1,64 @@
 package org.jeto.chessengine
 
-import org.jeto.chessengine.analysis.impl.*
-import org.jeto.chessengine.evaluation.criteria.impl.PiecesPositionsEvaluator
-import org.jeto.chessengine.evaluation.criteria.impl.PiecesValuesEvaluator
-import org.jeto.chessengine.evaluation.impl.BasicBoardStateEvaluator
-import org.jeto.chessengine.exceptions.InvalidMoveCodeException
+import org.jeto.chessengine.analysis.impl.DefaultBoardStateAnalyzer
+import org.jeto.chessengine.analysis.impl.DefaultGameStateAnalyzer
+import org.jeto.chessengine.analysis.impl.DefaultLegalMovesAnalyzer
+import org.jeto.chessengine.analysis.impl.DefaultThreatAnalyzer
+import org.jeto.chessengine.console.ConsolePlayer
+import org.jeto.chessengine.evaluation.impl.BasicBoardStateDeepEvaluator
+import org.jeto.chessengine.evaluation.impl.criteria.PiecesPositionsEvaluator
+import org.jeto.chessengine.evaluation.impl.criteria.PiecesValuesEvaluator
+import org.jeto.chessengine.evaluation.impl.criteria.ThreatEvaluator
 import org.jeto.chessengine.parsing.impl.DefaultMoveCodeParser
 import org.jeto.chessengine.pieces.Piece
+import org.jeto.chessengine.util.MovePrinter
 import java.util.*
 
+fun pp(vararg stuff: Any) {
+	print(stuff.joinToString("\t") + System.lineSeparator())
+}
+
 fun main() {
-	val board = Board()
-//	board.performMove(Move(board.state.getPiece(Position.fromCode("D2"))!!, Position.fromCode("D4")))
-
-//	println(Arrays.deepToString(board.getAvailableMoves(board.state.getPiece(Position.fromCode("B1"))!!).toTypedArray()))
-//	println(Arrays.deepToString(board.getAvailableMoves(board.state.getPiece(Position.fromCode("C1"))!!).toTypedArray()))
-
-//	board.performMove(MoveCodeParser(board.state, BoardStateAnalyzer(board.state)).parseMoveCode("Nc3"))
-//	board.performMove(MoveCodeParser(board.state, BoardStateAnalyzer(board.state)).parseMoveCode("d5"))
-//	board.performMove(MoveCodeParser(board.state, BoardStateAnalyzer(board.state)).parseMoveCode("Nxd5"))
-//	board.performMove(MoveCodeParser(board.state, BoardStateAnalyzer(board.state)).parseMoveCode("E6"))
-//	board.performMove(MoveCodeParser(board.state, BoardStateAnalyzer(board.state)).parseMoveCode("d4"))
-//	board.performMove(MoveCodeParser(board.state, BoardStateAnalyzer(board.state)).parseMoveCode("Bd6"))
 	val threatAnalyzer = DefaultThreatAnalyzer()
-//		val checkStateAnalyzer = DefaultCheckStateAnalyzer(threatAnalyzer)
-	val legalMovesAnalyzer = DefaultLegalMovesAnalyzer(threatAnalyzer, DefaultSpecialMovesAnalyzer(threatAnalyzer))
-	val boardStateAnalyzer = DefaultBoardStateAnalyzer(legalMovesAnalyzer, threatAnalyzer)
+	val legalMovesAnalyzer = DefaultLegalMovesAnalyzer(threatAnalyzer)
+	val gameStateAnalyzer = DefaultGameStateAnalyzer(threatAnalyzer, legalMovesAnalyzer)
+	val boardStateAnalyzer = DefaultBoardStateAnalyzer(gameStateAnalyzer, threatAnalyzer, legalMovesAnalyzer)
 	val moveCodeParser = DefaultMoveCodeParser(legalMovesAnalyzer)
+	val movePrinter = MovePrinter(threatAnalyzer, legalMovesAnalyzer)
 
-	val boardStateEvaluator = BasicBoardStateEvaluator(mapOf(
-		PiecesValuesEvaluator() to 1.0f,
-		PiecesPositionsEvaluator() to 1.0f
-	), legalMovesAnalyzer)
+	val boardStateEvaluator = BasicBoardStateDeepEvaluator(
+		legalMovesAnalyzer,
+		mapOf(
+			PiecesValuesEvaluator() to 4.0f,
+			PiecesPositionsEvaluator() to 1.0f,
+			ThreatEvaluator(threatAnalyzer) to 2.0f
+		))
 
-	board.state = BoardState.fromString("8\t|\t\t|\t\t|\t\t|\t♜\t|\t♚\t|\t♝\t|\t\t|\t♜\t |\n" +
-			"7\t|\t♛\t|\t♟\t|\t\t|\t♞\t|\t♟\t|\t♟\t|\t♟\t|\t♟\t |\n" +
-			"6\t|\t\t|\t\t|\t♟\t|\t♟\t|\t\t|\t\t|\t\t|\t\t |\n" +
-			"5\t|\t♟\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t |\n" +
-			"4\t|\t\t|\t\t|\t\t|\t♙\t|\t♙\t|\t\t|\t♝\t|\t\t |\n" +
-			"3\t|\t♙\t|\t\t|\t♘\t|\t♗\t|\t♗\t|\t♘\t|\t\t|\t\t |\n" +
-			"2\t|\t\t|\t♙\t|\t♕\t|\t\t|\t\t|\t♙\t|\t♙\t|\t♙\t |\n" +
-			"1\t|\t\t|\t\t|\t\t|\t♖\t|\t\t|\t♖\t|\t♔\t|\t\t |\n" +
-			"\t\tA\t\tB\t\tC\t\tD\t\tE\t\tF\t\tG\t\tH\t", Piece.Color.WHITE, true)!!
+	var boardState = //BoardState.DEFAULT
+		BoardState.fromString(
+		"8\t|\t♜\t|\t♞\t|\t♝\t|\t♛\t|\t♜\t|\t\t|\t♚\t|\t\t |\n" +
+				"7\t|\t♟\t|\t♟\t|\t♟\t|\t\t|\t♝\t|\t♟\t|\t♟\t|\t♟\t |\n" +
+				"6\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t |\n" +
+				"5\t|\t\t|\t\t|\t\t|\t♟\t|\t\t|\t\t|\t♕\t|\t\t |\n" +
+				"4\t|\t\t|\t\t|\t\t|\t♙\t|\t\t|\t\t|\t♞\t|\t\t |\n" +
+				"3\t|\t\t|\t\t|\t♘\t|\t\t|\t\t|\t♘\t|\t\t|\t\t |\n" +
+				"2\t|\t♙\t|\t♙\t|\t♙\t|\t\t|\t\t|\t♙\t|\t♙\t|\t♙\t |\n" +
+				"1\t|\t♖\t|\t\t|\t♗\t|\t\t|\t♔\t|\t♗\t|\t\t|\t♖\t |\n" +
+				"\t\tA\t\tB\t\tC\t\tD\t\tE\t\tF\t\tG\t\tH\t", Piece.Color.WHITE
+	)
 
-	println(board.state)
-	println(boardStateEvaluator.findBestMove(board.state, 2))
+	val consolePlayer = ConsolePlayer(boardStateAnalyzer, boardStateEvaluator, moveCodeParser, movePrinter, 3, 10)
+	consolePlayer.runCommand(boardState, "board")
+
+	legalMovesAnalyzer.clearCache()
+	threatAnalyzer.clearCache()
 
 	val reader = Scanner(System.`in`)
-	var moveCode: String = reader.next()
-	while (moveCode.isNotEmpty()) {
-		try {
-			board.performMove(moveCodeParser.parseMoveCode(board.state, moveCode))
-			println(board.state)
-			println(boardStateAnalyzer.getCheckState(board.state))
-			println(boardStateEvaluator.findBestMove(board.state, 2))
-		} catch (e: InvalidMoveCodeException) {
-			println(e)
-		}
-
-		moveCode = reader.next()
+	var command = reader.nextLine()
+	while (command.isNotEmpty()) {
+		legalMovesAnalyzer.clearCache()
+		threatAnalyzer.clearCache()
+		boardState = consolePlayer.runCommand(boardState, command)
+		command = reader.nextLine()
 	}
-
-	println(board.state)
-
-
-//	println(board.squares[2][5])
 }

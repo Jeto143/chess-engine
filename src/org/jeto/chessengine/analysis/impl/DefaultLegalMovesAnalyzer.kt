@@ -1,78 +1,69 @@
 package org.jeto.chessengine.analysis.impl
 
 import org.jeto.chessengine.BoardState
-import org.jeto.chessengine.pieces.Piece
 import org.jeto.chessengine.Position
-import org.jeto.chessengine.analysis.LegalMovesAnalyzer
+import org.jeto.chessengine.analysis.PieceLegalMovesAnalyzer
 import org.jeto.chessengine.analysis.ThreatAnalyzer
+import org.jeto.chessengine.analysis.base.BaseLegalMovesAnalyzer
+import org.jeto.chessengine.analysis.impl.specialmoves.CastlingAnalyzer
+import org.jeto.chessengine.analysis.impl.specialmoves.DoubleForwardAnalyzer
+import org.jeto.chessengine.analysis.impl.specialmoves.EnPassantAnalyzer
+import org.jeto.chessengine.analysis.impl.specialmoves.PromotionMovesAnalyzer
+import org.jeto.chessengine.moves.BasicMove
 import org.jeto.chessengine.moves.Move
+import org.jeto.chessengine.pieces.Piece
+import org.jeto.chessengine.pp
+import java.lang.Thread.yield
 
-class DefaultLegalMovesAnalyzer(private val threatAnalyzer: ThreatAnalyzer, private val legalSpecialMovesAnalyzer: DefaultSpecialMovesAnalyzer) : LegalMovesAnalyzer {
-	private val legalMovesCache: MutableMap<BoardState, MutableMap<Piece, List<Move>>> = mutableMapOf()
+class DefaultLegalMovesAnalyzer(
+	private val threatAnalyzer: ThreatAnalyzer,
+	private val pieceSpecialLegalMovesAnalyzers: List<PieceLegalMovesAnalyzer> = listOf(
+		DoubleForwardAnalyzer(),
+		CastlingAnalyzer(threatAnalyzer),
+		EnPassantAnalyzer(),
+		PromotionMovesAnalyzer()
+	)
+) : BaseLegalMovesAnalyzer() {
+	private val legalMovesCache: MutableMap<BoardState, List<Move>> = mutableMapOf()
 
-	override fun getLegalMoves(boardState: BoardState): List<Move> {
-		return boardState.getPieces(color = boardState.turnColor).map { piece -> getLegalMoves(boardState, piece) }.flatten()
-	}
-
-	override fun getLegalMoves(boardState: BoardState, piece: Piece): List<Move> {
+	override fun getLegalMoves(boardState: BoardState, sideColor: Piece.Color): List<Move> {
 		if (boardState !in legalMovesCache) {
-			legalMovesCache[boardState] = mutableMapOf()
+			legalMovesCache[boardState] = computeLegalMoves(boardState, sideColor)
 		}
-		if (piece !in legalMovesCache[boardState]!!) {
-			legalMovesCache[boardState]!![piece] = computeLegalMoves(boardState, piece)
-		}
-
-		return legalMovesCache[boardState]!![piece]!!
+		return legalMovesCache[boardState]!!
 	}
 
-	override fun isInCheckmate(boardState: BoardState, sideColor: Piece.Color): Boolean = boardState.getPieces(color = sideColor).all { getLegalMoves(boardState, it).isEmpty() }
-
-	private fun computeLegalMoves(boardState: BoardState, piece: Piece): List<Move> {
-		var legalMoves = (
-				computePotentialBasicNonTakingMoves(boardState, piece)
+	private fun computeLegalMoves(boardState: BoardState, sideColor: Piece.Color): List<Move> =
+		boardState.getPieces(color = sideColor)
+			.flatMap { piece -> (
+					computePotentialBasicNonTakingMoves(boardState, piece)
 				+ computePotentialBasicTakingMoves(boardState, piece)
-				+ legalSpecialMovesAnalyzer.computePotentialSpecialMoves(boardState, piece))
-			.filter { move -> !threatAnalyzer.isInCheck(boardState + move, move.piece.color) }
+				+ pieceSpecialLegalMovesAnalyzers.flatMap { it.getLegalMoves(boardState, piece) }
+				).filter { move -> !threatAnalyzer.isInCheck(boardState + move, move.piece.color) }
+			}
 
-		legalMoves = legalMoves
-			.map { move ->
-				val otherMove = legalMoves.find { it !== move && it.piece::class == move.piece::class && it.toPosition == move.toPosition }
-				return@map if (otherMove === null) move else when {
-					otherMove.fromPosition.col != move.fromPosition.col -> move + Move.Modifier.EXPLICIT_COL
-					else -> move + Move.Modifier.EXPLICIT_ROW
+	private fun computePotentialBasicNonTakingMoves(boardState: BoardState, piece: Piece): List<BasicMove> =
+		mutableListOf<BasicMove>().apply {
+			for (moveDirection in piece.getMoveDirections(boardState)) {
+				for (targetPosition in piece.computeTargetMovePositions(boardState, moveDirection, includeFinalObstacle = false)) {
+					add(BasicMove(piece, boardState.getPiecePosition(piece), targetPosition))
 				}
 			}
-//			.map { move -> fillMoveCheckModifiers(boardState, move) }
+		}
 
-		return legalMoves
-	}
-
-	private fun computePotentialBasicNonTakingMoves(boardState: BoardState, piece: Piece): List<Move> = sequence {
-		for (moveDirection in piece.getMoveDirections(boardState)) {
-			for (targetPosition in piece.computeTargetMovePositions(boardState, moveDirection, includeFinalObstacle = false)) {
-				yield(Move(piece, boardState.getPiecePosition(piece), targetPosition))
+	private fun computePotentialBasicTakingMoves(boardState: BoardState, piece: Piece): List<BasicMove> =
+		mutableListOf<BasicMove>().apply {
+			for (moveDirection in piece.getTakeDirections(boardState)) {
+				for (targetPosition in piece.computeTargetMovePositions(boardState, moveDirection, includeFinalObstacle = true) { squareIsFreeOrHostile(boardState, it, piece) }) {
+					add(BasicMove(piece, boardState.getPiecePosition(piece), targetPosition))
+				}
 			}
 		}
-	}.toList()
 
-	private fun computePotentialBasicTakingMoves(boardState: BoardState, piece: Piece): List<Move> = sequence {
-		for (moveDirection in piece.getTakeDirections(boardState)) {
-			for (targetPosition in piece.computeTargetMovePositions(boardState, moveDirection, includeFinalObstacle = true) { squareIsFreeOrHostile(boardState, it, piece) }) {
-				yield(Move(piece, boardState.getPiecePosition(piece), targetPosition, Move.Modifier.TAKES))
-			}
-		}
-	}.toList()
-
-	private fun fillMoveCheckModifiers(boardState: BoardState, move: Move): Move {
-		val newBoardState = boardState + move
-
-		return when {
-			isInCheckmate(newBoardState) -> move + Move.Modifier.CHECKMATE
-			threatAnalyzer.isInCheck(newBoardState) -> move + Move.Modifier.CHECK
-			else -> move
-		}
-	}
-
-	private fun squareIsFreeOrHostile(boardState: BoardState, position: Position, perspectivePiece: Piece) =
+	private fun squareIsFreeOrHostile(boardState: BoardState, position: Position, perspectivePiece: Piece): Boolean =
 		(boardState[position]?.color ?: perspectivePiece.color) != perspectivePiece.color
+
+	fun clearCache() {
+		legalMovesCache.clear()
+	}
 }

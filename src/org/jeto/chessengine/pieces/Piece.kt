@@ -41,9 +41,8 @@ abstract class Piece(val color: Color) {
 		private val typeToCode = codeToType.map { (code, type) -> type to code }.toMap()
 
 		fun fromSymbol(symbol: Char): Piece = symbolToTypeAndColor.getValue(symbol).let { (pieceClass, color) -> pieceClass.primaryConstructor!!.call(color) }
-		fun getTypeFromCode(code: Char?): KClass<out Piece> = codeToType[code] ?: error("No such piece code: %s".format(code))
-
-		fun getCodeFromType(type: KClass<out Piece>): Char = typeToCode[type] ?: error("No such piece type: %s".format(type))
+		fun getTypeFromCode(code: Char?): KClass<out Piece> = codeToType[code] ?: error("No such piece code: $code.")
+		fun getCodeFromType(type: KClass<out Piece>): Char = typeToCode[type] ?: error("No such piece type: $type.")
 	}
 
 	abstract fun toCode(): Char?
@@ -51,39 +50,37 @@ abstract class Piece(val color: Color) {
 	fun isWhite() = color == Color.WHITE
 	fun isBlack() = color == Color.BLACK
 
-	abstract fun getMoveDirections(boardState: BoardState): List<Piece.MoveDirection>
-	open fun getTakeDirections(boardState: BoardState): List<Piece.MoveDirection> = getMoveDirections(boardState)
-
-	override fun toString(): String = typeAndColorToSymbol.getValue(Pair(javaClass.kotlin, color)).toString()
+	abstract fun getMoveDirections(boardState: BoardState): List<MoveDirection>
+	open fun getTakeDirections(boardState: BoardState): List<MoveDirection> = getMoveDirections(boardState)
 
 	fun computeTargetMovePositions(
 		boardState: BoardState,
-		moveDirection: Piece.MoveDirection,
+		moveDirection: MoveDirection,
 		includeFinalObstacle: Boolean = false,
 		filter: (position: Position) -> Boolean = { true }
-	): List<Position> {
-		val positions: MutableList<Position> = mutableListOf()
-		var currentPosition: Position = boardState.getPiecePosition(this)
+	): List<Position> =
+		mutableListOf<Position>().apply {
+			var currentPosition: Position = boardState.getPiecePosition(this@Piece)
 
-		for (times in 1..(if (moveDirection.factor == 0) Int.MAX_VALUE else moveDirection.factor)) {
-			val newX = currentPosition.x + moveDirection.xDelta
-			val newY = currentPosition.y + moveDirection.yDelta
-			if (!boardState.isPositionValid(newX, newY)) {
-				break
-			}
-			val position = Position(newX, newY)
-			val positionOccupied = boardState.isPositionOccupied(position)
-			if (!positionOccupied || includeFinalObstacle) {
-				if (filter(position)) {
-					positions += position
+			for (times in 1..(if (moveDirection.factor == 0) Int.MAX_VALUE else moveDirection.factor)) {
+				val newX = currentPosition.x + moveDirection.xDelta
+				val newY = currentPosition.y + moveDirection.yDelta
+				if (!boardState.isPositionValid(newX, newY)) {
+					break
 				}
+				val position = Position(newX, newY)
+				val positionOccupied = boardState.isPositionOccupied(position)
+				if (!positionOccupied || includeFinalObstacle) {
+					if (filter(position)) {
+						add(position)
+					}
+				}
+				if (positionOccupied) {
+					break
+				}
+				currentPosition = position
 			}
-			if (positionOccupied) {
-				break
-			}
-			currentPosition = position
 		}
 
-		return positions
-	}
+	override fun toString(): String = typeAndColorToSymbol.getValue(Pair(javaClass.kotlin, color)).toString()
 }
